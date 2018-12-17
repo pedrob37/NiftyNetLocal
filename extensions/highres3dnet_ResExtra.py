@@ -13,7 +13,7 @@ from niftynet.layer.elementwise import ElementwiseLayer
 from niftynet.network.base_net import BaseNet
 
 
-class HighRes3DNet(BaseNet):
+class HighRes3DNet_ResExtra(BaseNet):
     """
     implementation of HighRes3DNet:
       Li et al., "On the compactness, efficiency, and representation of 3D
@@ -61,9 +61,9 @@ class HighRes3DNet(BaseNet):
                  b_initializer=None,
                  b_regularizer=None,
                  acti_func='prelu',
-                 name='HighRes3DNet'):
+                 name='HighRes3DNet_ResExtra'):
 
-        super(HighRes3DNet, self).__init__(
+        super(HighRes3DNet_ResExtra, self).__init__(
             num_classes=num_classes,
             w_initializer=w_initializer,
             w_regularizer=w_regularizer,
@@ -101,9 +101,18 @@ class HighRes3DNet(BaseNet):
 
         ### resblocks, all kernels dilated by 1 (normal convolution)
         params = self.layers[1]
+        with DilatedTensor(flow, dilation_factor=1) as dilated1:
+            inp_block = HighResBlock(
+                    params['n_features'],
+                    params['kernels'],
+                    acti_func=self.acti_func,
+                    w_initializer=self.initializers['w'],
+                    w_regularizer=self.regularizers['w'],
+                    name='{}_m'.format(params['name']))
+            inp_res = dilated1.tensor
         with DilatedTensor(flow, dilation_factor=1) as dilated:
-	    input_res = [{ ##TO DO: COMPLETE THIS SECTION: SAVE W_INIT TO USE FOR MEGABLOCK LATER
             for j in range(params['repeat']):
+                # For the number of repeats, create an instance of the HighResBlock class
                 res_block = HighResBlock(
                     params['n_features'],
                     params['kernels'],
@@ -113,14 +122,8 @@ class HighRes3DNet(BaseNet):
                     name='%s_%d' % (params['name'], j))
                 dilated.tensor = res_block.layer_op(dilated.tensor, is_training)
                 layer_instances.append((res_block, dilated.tensor))
-            mega_res_block = HighResBlock(
-		params['n_features'],
-		params['kernels'],
-		acti_func=self.acti_func,
-		w_initializer=self.initializers['w'],
-		w_regularizer=self.regularizers['w'],
-		name='{}_m'.format(params['name']))
-	flow = dilated.tensor
+        # Perform over-arching connection
+        flow = inp_block.mega_res(inp_res, dilated.tensor)
 
         ### resblocks, all kernels dilated by 2
         params = self.layers[2]
@@ -133,7 +136,7 @@ class HighRes3DNet(BaseNet):
                     w_initializer=self.initializers['w'],
                     w_regularizer=self.regularizers['w'],
                     name='%s_%d' % (params['name'], j))
-                dilated.tensor = res_block(dilated.tensor, is_training)
+                dilated.tensor = res_block.layer_op(dilated.tensor, is_training)
                 layer_instances.append((res_block, dilated.tensor))
         flow = dilated.tensor
 
@@ -148,7 +151,7 @@ class HighRes3DNet(BaseNet):
                     w_initializer=self.initializers['w'],
                     w_regularizer=self.regularizers['w'],
                     name='%s_%d' % (params['name'], j))
-                dilated.tensor = res_block(dilated.tensor, is_training)
+                dilated.tensor = res_block.layer_op(dilated.tensor, is_training)
                 layer_instances.append((res_block, dilated.tensor))
         flow = dilated.tensor
 
@@ -221,28 +224,11 @@ class HighResBlock(TrainableLayer):
 
         self.initializers = {'w': w_initializer}
         self.regularizers = {'w': w_regularizer}
-    def mega_layer_op(self, input_tensor, is_training):
-	output_tensor = input_tensor
-	# Create parameterised layers
-	bn_op = BNLayer(regularizer=self.regularizers['w'],
-			name='bn_m')
-	acti_op = ActiLayer(func=self.acti_func,
-			    regularizer=self.regularizers['w'],
-			    name='acti_m')
-	conv_op = ConvLayer(n_output_chns=self.n_output_chns,
-			    kernel_size=k,
-			    stride=1,
-			    w_initializer=self.regularizers['w'],
-			    w_regularizer=self.regularizers['w'],
-			    name='conv_m')
-	# Connect layers
-	output_tensor = bn_op(output_tensor, is_training)
-	output_tensor = acti_op(output_tensor)
-	output_tensor = conv_op(output_tensor)
-	# Create residual connections
-	if self.with_res:
-	    output_tensor = ElementwiseLayer('SUM')(output_tensor, input_tensor)
-	return output_tensor
+
+    def mega_res(self, input_tensor, output_tensor):
+        flow = ElementwiseLayer('SUM')(output_tensor, input_tensor)
+        return flow
+
     def layer_op(self, input_tensor, is_training):
         output_tensor = input_tensor
         for (i, k) in enumerate(self.kernels):
