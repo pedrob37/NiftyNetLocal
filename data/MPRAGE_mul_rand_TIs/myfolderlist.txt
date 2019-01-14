@@ -1,0 +1,14 @@
+MPRAGE_TI_1000_sub_17.nii.gz  MPRAGE_TI_400_sub_14.nii.gz
+MPRAGE_TI_1000_sub_6.nii.gz   MPRAGE_TI_400_sub_18.nii.gz
+MPRAGE_TI_1000_sub_8.nii.gz   MPRAGE_TI_400_sub_1.nii.gz
+MPRAGE_TI_100_sub_12.nii.gz   MPRAGE_TI_400_sub_23.nii.gz
+MPRAGE_TI_100_sub_15.nii.gz   MPRAGE_TI_400_sub_25.nii.gz
+MPRAGE_TI_100_sub_19.nii.gz   MPRAGE_TI_400_sub_4.nii.gz
+MPRAGE_TI_100_sub_21.nii.gz   MPRAGE_TI_400_sub_5.nii.gz
+MPRAGE_TI_100_sub_2.nii.gz    MPRAGE_TI_700_sub_13.nii.gz
+MPRAGE_TI_100_sub_3.nii.gz    MPRAGE_TI_700_sub_16.nii.gz
+MPRAGE_TI_100_sub_7.nii.gz    MPRAGE_TI_700_sub_20.nii.gz
+MPRAGE_TI_100_sub_9.nii.gz    MPRAGE_TI_700_sub_22.nii.gz
+MPRAGE_TI_400_sub_0.nii.gz    MPRAGE_TI_700_sub_24.nii.gz
+MPRAGE_TI_400_sub_10.nii.gz   MPRAGE_TI_700_sub_26.nii.gz
+MPRAGE_TI_400_sub_11.nii.gz   myfolderlist.txt
