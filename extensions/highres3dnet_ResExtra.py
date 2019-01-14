@@ -124,9 +124,18 @@ class HighRes3DNet_ResExtra(BaseNet):
                 layer_instances.append((res_block, dilated.tensor))
         # Perform over-arching connection
         flow = inp_block.mega_res(inp_res, dilated.tensor)
-
+        ### EDITING HERE
         ### resblocks, all kernels dilated by 2
         params = self.layers[2]
+        with DilatedTensor(flow, dilation_factor=1) as dilated2:
+            inp_block2 = HighResBlock(
+                    params['n_features'],
+                    params['kernels'],
+                    acti_func=self.acti_func,
+                    w_initializer=self.initializers['w'],
+                    w_regularizer=self.regularizers['w'],
+                    name='{}_m'.format(params['name']))
+            inp_res2 = dilated2.tensor
         with DilatedTensor(flow, dilation_factor=2) as dilated:
             for j in range(params['repeat']):
                 res_block = HighResBlock(
@@ -138,10 +147,20 @@ class HighRes3DNet_ResExtra(BaseNet):
                     name='%s_%d' % (params['name'], j))
                 dilated.tensor = res_block.layer_op(dilated.tensor, is_training)
                 layer_instances.append((res_block, dilated.tensor))
-        flow = dilated.tensor
+        # Perform over-arching connection
+        flow = inp_block2.mega_res(inp_res2, dilated.tensor)
 
         ### resblocks, all kernels dilated by 4
         params = self.layers[3]
+        with DilatedTensor(flow, dilation_factor=1) as dilated3:
+            inp_block3 = HighResBlock(
+                    params['n_features'],
+                    params['kernels'],
+                    acti_func=self.acti_func,
+                    w_initializer=self.initializers['w'],
+                    w_regularizer=self.regularizers['w'],
+                    name='{}_m'.format(params['name']))
+            inp_res3 = dilated3.tensor
         with DilatedTensor(flow, dilation_factor=4) as dilated:
             for j in range(params['repeat']):
                 res_block = HighResBlock(
@@ -153,7 +172,8 @@ class HighRes3DNet_ResExtra(BaseNet):
                     name='%s_%d' % (params['name'], j))
                 dilated.tensor = res_block.layer_op(dilated.tensor, is_training)
                 layer_instances.append((res_block, dilated.tensor))
-        flow = dilated.tensor
+        # Perform over-arching connection
+        flow = inp_block3.mega_res(inp_res3, dilated.tensor)
 
         ### 1x1x1 convolution layer
         params = self.layers[4]
